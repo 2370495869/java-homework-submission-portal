@@ -43,5 +43,5 @@ PostgreSQL 18.6 Testcontainers 测试已加入构建，在有 Docker 的环境�
 - 发布候选的源码、配置和文档扫描未发现旧演示账户、提交人个人标识或常见凭据字面量；`.env`、构建目录、日志、上传目录和原始 `testfiles/` 均由 `.gitignore` 排除。`.env.example` 不含实际密码或令牌。
 - 上传类型检查是基础文件签名验证，不是完整文档解析或恶意软件扫描；系统暂不包含病毒扫描、评分、评论、邮件找回密码、请求速率限制和对象存储实现。
 - 生产环境应启用 HTTPS 与 `APP_COOKIE_SECURE=true`，使用强且独立的数据库/管理员密码，并做好数据库和上传卷的访问控制及备份。
-- 本机没有 Docker，因此 Docker 镜像构建、Compose 启动和 PostgreSQL 容器测试尚未在本机执行；GitHub Actions 结果需在仓库推送后由远端工作流产生。
+- 本机没有 Docker，因此 Docker 镜像构建、Compose 启动和 PostgreSQL 容器测试尚未在本机执行。首次推送提交 `4b0f6593fb59d8216f6a16385fa31396b7f6b0fb` 后，GitHub Actions 的 `verify` job 已完成且全部步骤成功（[run 36409286746](https://github.com/2370495869/java-homework-submission-portal/actions/runs/36409286746)）。
 - 仓库未附带开源许可证；公开可见不授予额外的复制、分发或商用权利。
