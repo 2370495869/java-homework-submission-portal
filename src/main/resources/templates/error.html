@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('请求未完成')}"></head>
+<body class="error-page"><main class="error-card">
+  <span class="error-code" th:text="${status}">400</span><p class="eyebrow">REQUEST NOT COMPLETED</p>
+  <h1 th:text="${message}">请求未完成</h1><p>请检查输入或确认你拥有访问此内容的权限。</p>
+  <a class="button button-primary" th:href="@{/}">返回工作台</a>
+</main></body></html>

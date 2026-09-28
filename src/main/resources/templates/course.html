@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${course.title})}"></head>
+<body><div class="app-shell">
+  <header th:replace="~{fragments :: topbar(${me})}"></header>
+  <main class="page-wrap">
+    <div th:replace="~{fragments :: alerts}"></div><a class="back-link" th:href="@{/}">← 返回工作台</a>
+    <section class="course-hero"><div class="course-hero-content">
+      <p class="eyebrow">COURSE SPACE</p><h1 th:text="${course.title}">课程名称</h1>
+      <p th:text="${course.description}" th:if="${!#strings.isEmpty(course.description)}">课程说明</p>
+      <div class="course-meta"><span th:if="${isTeacher}">教师课程</span><span th:if="${isStudent}">已加入课程</span><span th:if="${isAdmin}">管理员查看</span><span th:text="|${#lists.size(assignments)} 份作业|">0 份作业</span></div>
+    </div><div class="invite-card" th:if="${isTeacher}"><small>学生加入邀请码</small><strong th:text="${course.inviteCode}">ABCDEFGH</strong><span>只分享给本课程学生</span></div></section>
+
+    <section class="section-block" th:if="${isTeacher}">
+      <div class="section-heading"><div><p class="eyebrow">PUBLISH WORK</p><h2>发布新作业</h2><p>设置名称、截止时间和是否接收迟交。</p></div></div>
+      <form class="panel form-grid" th:action="@{/courses/{id}/assignments(id=${course.id})}" th:object="${assignmentForm}" method="post">
+        <div class="field"><label for="assignmentTitle">作业名称</label><input id="assignmentTitle" th:field="*{title}" required maxlength="120" placeholder="例如：第一章练习"></div>
+        <div class="field"><label for="dueAt">截止时间 <span class="timezone-hint">课程时区</span></label><input id="dueAt" type="datetime-local" th:field="*{dueAt}" required></div>
+        <div class="field field-wide"><label for="assignmentDescription">作业说明 <span class="optional">选填</span></label><textarea id="assignmentDescription" th:field="*{description}" rows="3" maxlength="4000" placeholder="提交格式、题目说明或评分要求"></textarea></div>
+        <label class="check-row field-wide"><input type="checkbox" th:field="*{allowLate}"><span><strong>接受迟交</strong><small>迟交版本会标记提交时间和状态。</small></span></label>
+        <div class="form-actions field-wide"><button class="button button-primary" type="submit">发布作业 <span aria-hidden="true">+</span></button></div>
+      </form>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading section-heading-row"><div><p class="eyebrow">ASSIGNMENTS</p><h2>课程作业</h2></div><span class="count-pill"><span th:text="${#lists.size(assignments)}">0</span> 项</span></div>
+      <div class="empty-panel" th:if="${#lists.isEmpty(assignments)}"><div class="empty-icon">◷</div><strong>还没有发布作业</strong><p>教师发布作业后，会显示截止时间与提交状态。</p></div>
+      <article class="assignment-card" th:each="item : ${assignments}">
+        <div class="assignment-top">
+          <div class="assignment-number" th:text="|${#numbers.formatInteger(item.assignment.id, 2)}|">01</div>
+          <div class="assignment-title"><h3 th:text="${item.assignment.title}">作业名称</h3><p th:text="${item.assignment.description}" th:if="${!#strings.isEmpty(item.assignment.description)}">作业说明</p></div>
+          <div class="deadline"><small>截止时间</small><strong th:text="${item.dueText}">2026-09-28 23:59</strong><span class="status-pill status-accept" th:if="${item.assignment.allowLate}">接受迟交</span><span class="status-pill status-closed" th:if="${!item.assignment.allowLate && !item.canSubmit}">已截止</span></div>
+        </div>
+        <div class="submission-area" th:if="${isStudent}">
+          <div class="submission-list" th:if="${!#lists.isEmpty(item.submissions)}">
+            <div class="submission-heading"><strong>提交版本</strong><span th:text="|${#lists.size(item.submissions[0].versions)} 个版本|">0 个版本</span></div>
+            <div class="version-row" th:each="version : ${item.submissions[0].versions}">
+              <div class="file-badge">FILE</div><div class="version-file"><strong th:text="${version.filename}">作业.pdf</strong><small th:text="|版本 ${version.number} · ${version.submittedAt} · ${version.byteSize} bytes|">提交详情</small></div>
+              <span class="status-pill status-late" th:if="${version.late}">迟交</span><span class="status-pill status-on-time" th:if="${!version.late}">已提交</span>
+              <a class="button button-quiet button-small" th:href="@{/versions/{id}/download(id=${version.id})}">下载</a>
+            </div>
+          </div>
+          <p class="subtle-note" th:if="${#lists.isEmpty(item.submissions)}">提交后，版本和时间会显示在这里。</p>
+          <form class="upload-form" th:if="${item.canSubmit}" th:action="@{/assignments/{id}/submissions(id=${item.assignment.id})}" method="post" enctype="multipart/form-data">
+            <div class="field"><label th:for="|file-${item.assignment.id}|">上传新版本 <span class="optional">PDF / DOC / DOCX，单文件最多 10 MiB</span></label><input type="file" name="file" th:id="|file-${item.assignment.id}|" accept=".pdf,.doc,.docx" required></div>
+            <button class="button button-primary" type="submit">提交作业 <span aria-hidden="true">↑</span></button>
+          </form>
+          <p class="subtle-note" th:if="${!item.canSubmit && #lists.isEmpty(item.submissions)}">截止时间已过，且教师不接受迟交。</p>
+        </div>
+        <div class="submission-area" th:if="${isTeacher || isAdmin}">
+          <div class="submission-heading"><strong>学生提交</strong><span th:text="|${#lists.size(item.submissions)} 位学生|">0 位学生</span></div>
+          <div class="empty-inline" th:if="${#lists.isEmpty(item.submissions)}">尚无学生提交。</div>
+          <div class="student-submission" th:each="submission : ${item.submissions}">
+            <div class="student-name"><span class="avatar avatar-small" th:text="${#strings.substring(submission.displayName, 0, 1)}">学</span><span><strong th:text="${submission.displayName}">学生</strong><small th:text="${submission.username}">username</small></span></div>
+            <div class="student-versions"><div class="version-row" th:each="version : ${submission.versions}">
+              <div class="version-file"><strong th:text="|V${version.number} · ${version.filename}|">提交文件</strong><small th:text="${version.submittedAt}">提交时间</small></div>
+              <span class="status-pill status-late" th:if="${version.late}">迟交</span><span class="status-pill status-on-time" th:if="${!version.late}">按时</span>
+              <a class="button button-quiet button-small" th:href="@{/versions/{id}/download(id=${version.id})}">下载</a>
+            </div></div>
+          </div>
+        </div>
+      </article>
+    </section>
+    <section class="section-block" th:if="${isTeacher}">
+      <div class="section-heading section-heading-row"><div><p class="eyebrow">ROSTER</p><h2>课程学生</h2></div><span class="count-pill"><span th:text="${#lists.size(roster)}">0</span> 人</span></div>
+      <div class="roster-strip" th:if="${!#lists.isEmpty(roster)}"><span class="roster-person" th:each="member : ${roster}"><span class="avatar avatar-small" th:text="${#strings.substring(member.displayName, 0, 1)}">学</span><span th:text="${member.displayName}">学生</span></span></div>
+      <div class="empty-inline panel" th:if="${#lists.isEmpty(roster)}">学生使用课程邀请码加入后会显示在这里。</div>
+    </section>
+  </main>
+  <footer class="site-footer">课序 · 课程作业平台 <span>课程时区由部署配置决定</span></footer>
+</div></body></html>

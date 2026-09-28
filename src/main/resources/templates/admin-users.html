@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('用户管理')}"></head>
+<body><div class="app-shell">
+  <header th:replace="~{fragments :: topbar(${me})}"></header>
+  <main class="page-wrap">
+    <div th:replace="~{fragments :: alerts}"></div><a class="back-link" th:href="@{/}">← 返回工作台</a>
+    <section class="page-hero"><div><p class="eyebrow">PLATFORM ADMINISTRATION</p><h1>用户管理</h1><p class="hero-copy">注册账户默认为学生。只为可信任的账户授予教师权限。</p></div><div class="hero-stamp"><span th:text="${#lists.size(users)}">0</span><small>个账户</small></div></section>
+    <section class="section-block"><div class="panel table-panel">
+      <table class="user-table"><thead><tr><th>账户</th><th>角色</th><th>注册时间</th><th>更新角色</th></tr></thead><tbody>
+      <tr th:each="user : ${users}">
+        <td><strong th:text="${user.displayName}">显示名称</strong><small th:text="${user.username}">username</small></td>
+        <td><span class="role-pill" th:text="${user.role}">STUDENT</span></td>
+        <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm')}">2026-09-28</td>
+        <td>
+          <form class="role-form" th:if="${user.role.name() != 'ADMIN'}" th:action="@{/admin/users/{id}/role(id=${user.id})}" method="post">
+            <select name="role" aria-label="选择角色"><option value="STUDENT" th:selected="${user.role.name() == 'STUDENT'}">学生</option><option value="TEACHER" th:selected="${user.role.name() == 'TEACHER'}">教师</option></select>
+            <button class="button button-quiet button-small" type="submit">保存</button>
+          </form>
+          <span class="subtle-note" th:if="${user.role.name() == 'ADMIN'}">管理员</span>
+        </td>
+      </tr></tbody></table>
+      <div class="empty-inline" th:if="${#lists.isEmpty(users)}">还没有注册用户。</div>
+    </div></section>
+  </main>
+</div></body></html>

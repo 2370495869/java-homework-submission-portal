@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('注册')}"></head>
+<body class="auth-page"><main class="auth-layout auth-layout-register">
+  <section class="auth-intro">
+    <a class="brand brand-light" th:href="@{/login}"><span class="brand-mark">课</span><span><strong>课序</strong><small>课程作业平台</small></span></a>
+    <p class="eyebrow">START WITH A COURSE</p>
+    <h1>从加入课程开始，<br><em>把作业交得清楚。</em></h1>
+    <p class="intro-copy">学生账户仅开放学生权限。加入课程后，你可以查看作业并提交多个版本。</p>
+    <div class="intro-note"><span class="note-dot"></span>账户角色由平台规则保护</div>
+  </section>
+  <section class="auth-card">
+    <div class="auth-card-heading"><p class="eyebrow">CREATE ACCOUNT</p><h2>创建学生账户</h2><p>教师账户需由平台管理员授予。</p></div>
+    <div class="alert alert-error" th:if="${formError != null}" th:text="${formError}"></div>
+    <form th:action="@{/register}" th:object="${form}" method="post" class="form-stack">
+      <label for="username">用户名</label><input id="username" th:field="*{username}" autocomplete="username" required maxlength="50" placeholder="3–50 位字母或数字">
+      <small class="field-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></small>
+      <label for="displayName">显示名称</label><input id="displayName" th:field="*{displayName}" autocomplete="nickname" required maxlength="80" placeholder="课程中显示的名称">
+      <small class="field-error" th:if="${#fields.hasErrors('displayName')}" th:errors="*{displayName}"></small>
+      <label for="password">密码</label><input id="password" name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="64" placeholder="至少 12 个字符">
+      <small class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
+      <button class="button button-primary button-wide" type="submit">创建账户 <span aria-hidden="true">→</span></button>
+    </form>
+    <p class="auth-switch">已有账户？ <a th:href="@{/login}">返回登录</a></p>
+    <div class="auth-footnote">密码使用 BCrypt 保存。请勿重复使用其他网站的密码。</div>
+  </section>
+</main></body></html>

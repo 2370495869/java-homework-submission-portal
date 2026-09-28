@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f6fb">
+  <title th:text="|${title} · 作业提交平台|">作业提交平台</title>
+  <link rel="stylesheet" th:href="@{/assets/app.css}">
+</head>
+<body>
+<header th:fragment="topbar(${me})" class="topbar">
+  <a class="brand" th:href="@{/}"><span class="brand-mark">课</span><span><strong>课序</strong><small>课程作业平台</small></span></a>
+  <div class="topbar-actions">
+    <a class="quiet-link" th:if="${me.role.name() == 'ADMIN'}" th:href="@{/admin/users}">用户管理</a>
+    <span class="user-chip"><span class="avatar" th:text="${#strings.substring(me.displayName, 0, 1)}">课</span><span th:text="${me.displayName}">用户</span></span>
+    <form th:action="@{/logout}" method="post"><button class="button button-quiet button-small" type="submit">退出</button></form>
+  </div>
+</header>
+<div th:fragment="alerts" class="alerts">
+  <div class="alert alert-success" th:if="${notice != null}" th:text="${notice}">已完成</div>
+  <div class="alert alert-error" th:if="${error != null}" th:text="${error}">操作失败</div>
+</div>
+</body>
+</html>

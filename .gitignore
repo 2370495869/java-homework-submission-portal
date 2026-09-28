@@ -1,0 +1,28 @@
+# Build output and local runtime data
+/target/
+/uploads/
+/data/
+/local-storage/
+/postgres-data/
+*.class
+*.log
+
+# Local configuration and secrets
+/.env
+/.env.*
+!/.env.example
+*.pem
+*.key
+
+# Local databases and IDE files
+*.db
+*.sqlite
+*.sqlite3
+*.mv.db
+*.trace.db
+.idea/
+.vscode/
+.DS_Store
+
+# Original unreviewed experiment fixtures are kept locally, not published.
+/testfiles/
