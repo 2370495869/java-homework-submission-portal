@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 
 @Component
 public class LocalFileStorage implements FileStorage {
-    private static final long MAX_BYTES = 10L * 1024 * 1024;
     private static final Pattern KEY_PATTERN =
             Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(pdf|doc|docx)");
 
@@ -45,7 +44,7 @@ public class LocalFileStorage implements FileStorage {
             int read;
             while ((read = input.read(buffer)) != -1) {
                 size += read;
-                if (size > MAX_BYTES) {
+                if (size > UploadLimits.MAX_FILE_SIZE_BYTES) {
                     throw new IOException("File exceeds the configured size limit.");
                 }
                 digest.update(buffer, 0, read);

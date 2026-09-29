@@ -39,4 +39,5 @@ class LocalFileStorageTest {
         assertThrows(IOException.class, () -> storage.store(key, new ByteArrayInputStream(oversized)));
         assertFalse(Files.exists(root.resolve(key)));
     }
+
 }

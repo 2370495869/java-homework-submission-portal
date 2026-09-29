@@ -9,7 +9,7 @@
 - **账户与权限**：学生通过注册页创建账户，所有新账户固定为学生角色；BCrypt（强度 12）存储密码。管理员由环境变量首次引导，后台可将学生设为教师，不能通过公开注册或后台表单授予管理员。登录使用服务端会话；启用 CSRF、会话固定保护、退出时清除会话、HttpOnly/SameSite Cookie、可配置 Secure Cookie，以及 CSP、Referrer-Policy 和 `nosniff` 响应头。
 - **课程与作业**：教师创建课程，系统生成邀请码；学生凭邀请码加入。教师仅能为本人课程发布作业，设定课程时区下的截止时间并选择是否接受迟交。学生只能查看已加入课程；教师只能查看本人课程及其中学生。
 - **提交与版本**：每个学生每份作业使用一条提交记录；每次重新提交建立递增版本，保留原始文件名、提交时间、迟交标记、字节数和 SHA-256 摘要。禁止迟交时，过期上传会被拒绝。
-- **文件保护**：只接收 PDF、DOC、DOCX，单文件最大 10 MiB、单请求最大 12 MiB；检查扩展名和基本签名。磁盘文件名由随机键生成，拒绝路径穿越和覆盖。下载强制作为附件并设置 `nosniff`，每次读取均检查提交本人或课程教师权限。`FileStorage` 接口与本地实现分离，应用容器通过独立命名卷保存上传。
+- **文件保护**：只接收 PDF、DOC、DOCX，单文件上限 10 MiB、单请求上限 12 MiB；提交服务与本地存储共用 `UploadLimits` 常量，Servlet multipart 与数据库约束保持相同上限。检查扩展名和基本签名。磁盘文件名由随机键生成，拒绝路径穿越和覆盖。下载强制作为附件并设置 `nosniff`，每次读取均检查提交本人或课程教师权限。`FileStorage` 接口与本地实现分离，应用容器通过独立命名卷保存上传。
 - **工程配置**：Java 21、Spring Boot 4.1.1、Maven Wrapper 3.3.4（固定 Maven 3.9.16 并校验分发包摘要）、PostgreSQL 18.6、Flyway 12.4.0。Flyway V1 建立用户、课程、选课、作业、提交与版本表；Hibernate 启动时验证结构，不负责自动建表。
 - **运行和协作**：提供 Dockerfile 与 Docker Compose（数据库健康检查、应用等待数据库健康、独立数据库/上传命名卷、只读根文件系统、非 root 应用用户）、不含密钥的 `.env.example`、Windows/Linux Wrapper 启动脚本和 GitHub Actions Java 21 `verify` 工作流。`README.md` 已改为中文，说明启动、角色流程、安全配置和限制。
 
@@ -29,19 +29,19 @@
 
 ## 自动化测试与本机验证
 
-在 JDK 21.0.11 环境执行 `mvnw.cmd -B -ntp verify`，结果为 **BUILD SUCCESS**：共报告 10 项，9 项通过，1 项跳过，失败和错误均为 0。通过项覆盖：
+2026-09-29 在 JDK 21.0.11 环境执行 `mvnw.cmd -B -ntp clean verify`，结果为 **BUILD SUCCESS**：共报告 10 项，9 项通过，1 项因本机没有 Docker 而跳过，失败和错误均为 0。通过项覆盖：
 
 - Flyway 在 H2 上执行 V1、JPA 结构校验、登录/注册/管理员用户页/工作台/课程页模板渲染。
 - 注册用户始终为学生、密码为 BCrypt 哈希；无 CSRF 令牌的写请求被拒绝；学生无法访问管理员页面或创建课程。
 - 邀请码加入、教师建课与发布作业、禁迟交拒绝、迟交状态和版本递增、课程归属下载授权。
 - PDF/DOC/DOCX 签名与扩展名检查、文件名净化、本地存储 SHA-256、路径键限制、拒绝覆盖和超限时清除不完整文件。
 
-PostgreSQL 18.6 Testcontainers 测试已加入构建，在有 Docker 的环境运行；本机没有 Docker，因此该项按 `disabledWithoutDocker` 跳过，没有声称本机验证了 PostgreSQL 或 Compose 容器启动。另以隔离 H2 测试运行时启动实际 Java Web 进程，经 HTTP 检查 `/login`、`/register` 和 CSS 均返回 200，并确认响应含 CSP。
+PostgreSQL 18.6 Testcontainers 测试已加入构建，在有 Docker 的环境运行；本机没有 Docker，因此该项按 `disabledWithoutDocker` 跳过，没有声称本机验证了 PostgreSQL 或 Compose 容器启动。2026-09-29 又通过 Spring Boot `test-run` 使用测试 classpath 和隔离 H2 启动实际 Web 进程；HTTP 检查 `/login`、`/register`、`/assets/app.css` 均返回 200，三者响应都含 CSP。`docker compose config --quiet` 也通过配置校验（使用仅用于校验的占位变量，未启动容器）。
 
 ## 安全检查与限制
 
 - 发布候选的源码、配置和文档扫描未发现旧演示账户、提交人个人标识或常见凭据字面量；`.env`、构建目录、日志、上传目录和原始 `testfiles/` 均由 `.gitignore` 排除。`.env.example` 不含实际密码或令牌。
 - 上传类型检查是基础文件签名验证，不是完整文档解析或恶意软件扫描；系统暂不包含病毒扫描、评分、评论、邮件找回密码、请求速率限制和对象存储实现。
 - 生产环境应启用 HTTPS 与 `APP_COOKIE_SECURE=true`，使用强且独立的数据库/管理员密码，并做好数据库和上传卷的访问控制及备份。
-- 本机没有 Docker，因此 Docker 镜像构建、Compose 启动和 PostgreSQL 容器测试尚未在本机执行。首次推送提交 `4b0f6593fb59d8216f6a16385fa31396b7f6b0fb` 后，GitHub Actions 的 `verify` job 已完成且全部步骤成功（[run 36409286746](https://github.com/2370495869/java-homework-submission-portal/actions/runs/36409286746)）。
+- 本机没有 Docker，因此 Docker 镜像构建、Compose 启动和 PostgreSQL 容器测试尚未在本机执行；可执行 JAR 的 PostgreSQL 启动也需要一个可访问的数据库。作者归属修正并普通推送后，截至 2026-09-28，`main` 为 `d701f80b2042fab5795c19f1770cbc85b29b6e28`，GitHub Actions `verify` 运行 [36412797713](https://github.com/2370495869/java-homework-submission-portal/actions/runs/36412797713) 已成功；当时 Contributors 仅列出 `2370495869`。这是带日期的历史核验记录，不保证远端此刻状态未变化。
 - 仓库未附带开源许可证；公开可见不授予额外的复制、分发或商用权利。

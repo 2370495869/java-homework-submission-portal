@@ -38,7 +38,6 @@ server:
 app:
   storage:
     directory: ${UPLOAD_DIR:./uploads}
-    max-file-size: 10485760
   time-zone: ${APP_TIME_ZONE:Asia/Shanghai}
   bootstrap-admin:
     username: ${APP_BOOTSTRAP_ADMIN_USERNAME:}

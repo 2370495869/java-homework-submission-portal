@@ -24,6 +24,25 @@
 | 上传存储 | 本地卷，可配置目录 | 与业务服务隔离，便于以后替换对象存储实现 |
 
 详细的目标、改造前基线和验收范围见 [目标报告](docs/target-report.md)。真实实现和验证记录见 [实现报告](docs/implementation-report.md)。
+简历表述与面试讨论提纲见 [项目说明](docs/resume-notes.md)。
+
+## 架构
+
+```mermaid
+flowchart LR
+    Browser[浏览器]
+    Proxy[反向代理 / TLS 终止]
+    App[Spring Boot 单体应用<br/>账户 / 课程 / 作业 / 提交]
+    DB[(PostgreSQL<br/>Flyway 迁移)]
+    Files[(本地文件卷<br/>随机存储键)]
+    CI[GitHub Actions<br/>Maven verify]
+
+    Browser -->|HTTPS| Proxy
+    Proxy -->|内部 HTTP| App
+    App --> DB
+    App -->|FileStorage 接口| Files
+    CI -->|构建与自动化测试| App
+```
 
 ## 首次启动（Docker Compose）
 
@@ -41,7 +60,7 @@ $bytes = [byte[]]::new(32)
 [Convert]::ToHexString($bytes)
 ~~~
 
-在 `.env` 中填写 `DB_PASSWORD`、`APP_BOOTSTRAP_ADMIN_USERNAME` 和 `APP_BOOTSTRAP_ADMIN_PASSWORD`。首次运行会创建管理员；若数据库里已有该用户名，启动不会更改现有账户。
+在 `.env` 中填写 `DB_PASSWORD`、`APP_BOOTSTRAP_ADMIN_USERNAME` 和 `APP_BOOTSTRAP_ADMIN_PASSWORD`。上传单文件上限为 10 MiB、单请求上限为 12 MiB；反向代理也应设置匹配的请求大小限制。首次运行会创建管理员；若数据库里已有该用户名，启动不会更改现有账户。
 
 ~~~sh
 docker compose up --build -d

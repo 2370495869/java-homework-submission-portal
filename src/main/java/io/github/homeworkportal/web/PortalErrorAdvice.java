@@ -24,7 +24,7 @@ public class PortalErrorAdvice {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ModelAndView tooLarge(MaxUploadSizeExceededException exception) {
-        return error(HttpStatus.PAYLOAD_TOO_LARGE, "上传请求超过 10 MiB 文件限制。");
+        return error(HttpStatus.PAYLOAD_TOO_LARGE, "上传请求超过系统允许的大小限制。");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

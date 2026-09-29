@@ -14,6 +14,7 @@ import io.github.homeworkportal.repository.SubmissionVersionRepository;
 import io.github.homeworkportal.storage.FileStorage;
 import io.github.homeworkportal.storage.FileTypeValidator;
 import io.github.homeworkportal.storage.StoredObject;
+import io.github.homeworkportal.storage.UploadLimits;
 import io.github.homeworkportal.storage.ValidatedUpload;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,6 @@ import java.util.UUID;
 
 @Service
 public class SubmissionService {
-    private static final long MAX_FILE_SIZE = 10L * 1024 * 1024;
     private final AccountService accounts;
     private final CourseService courses;
     private final EnrollmentRepository enrollments;
@@ -58,8 +58,8 @@ public class SubmissionService {
                 || !enrollments.existsByCourse_IdAndStudent_Id(assignment.getCourse().getId(), student.getId())) {
             throw new AccessDeniedException("只有本课程的学生可以提交作业。");
         }
-        if (file == null || file.isEmpty() || file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("请选择不超过 10 MiB 的文件。");
+        if (file == null || file.isEmpty() || file.getSize() > UploadLimits.MAX_FILE_SIZE_BYTES) {
+            throw new IllegalArgumentException("请选择不超过 10 MiB 的非空文件。");
         }
 
         ValidatedUpload metadata;
@@ -76,7 +76,7 @@ public class SubmissionService {
         StoredObject stored;
         try {
             stored = storage.store(storageKey, file.getInputStream());
-            if (stored.size() < 1 || stored.size() > MAX_FILE_SIZE) {
+            if (stored.size() < 1 || stored.size() > UploadLimits.MAX_FILE_SIZE_BYTES) {
                 throw new IllegalArgumentException("文件大小不符合限制。");
             }
             return recorder.record(assignmentId, username, metadata.filename(), storageKey,
